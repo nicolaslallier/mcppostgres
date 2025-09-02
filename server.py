@@ -146,13 +146,12 @@ app = Starlette(
     routes=[
         Route("/healthz", healthz, methods=["GET"]),
         # MCP will be available under /mcp (e.g. https://your.host/mcp)
-        #Mount("/mcp", app=mcp.streamable_http_app()),
-        Mount("/mcp", app=mcp.streamable_http_app(path="/")),
+        Mount("/mcp", app=mcp.http_app(path="/mcp")),
     ],
     on_startup=[startup],
     on_shutdown=[shutdown],
 )
-
+ypo
 # For local dev: uvicorn server:app --port 8000 --host 0.0.0.0
 if __name__ == "__main__":
     import uvicorn
