@@ -146,7 +146,8 @@ app = Starlette(
     routes=[
         Route("/healthz", healthz, methods=["GET"]),
         # MCP will be available under /mcp (e.g. https://your.host/mcp)
-        Mount("/mcp", app=mcp.streamable_http_app()),
+        #Mount("/mcp", app=mcp.streamable_http_app()),
+        Mount("/mcp", app=mcp.streamable_http_app(path="/")),
     ],
     on_startup=[startup],
     on_shutdown=[shutdown],
