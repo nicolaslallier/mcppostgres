@@ -142,11 +142,14 @@ async def shutdown():
         await _pool.close()
         _pool = None
 
+# Create the MCP app
+mcp_app = mcp.streamable_http_app()
+
 app = Starlette(
     routes=[
         Route("/healthz", healthz, methods=["GET"]),
         # MCP will be available under /mcp (e.g. https://your.host/mcp)
-        Mount("/mcp", app=mcp.http_app(path="/mcp")),
+        Mount("/mcp", app=mcp_app),
     ],
     on_startup=[startup],
     on_shutdown=[shutdown],
