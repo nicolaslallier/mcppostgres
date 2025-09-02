@@ -1,0 +1,46 @@
+name: ca-mcppostgresql-cac-prd
+location: canadaeast
+properties:
+  managedEnvironmentId: /subscriptions/9a2c32ec-3c3f-4c09-8958-747e19a543eb/resourceGroups/rg-Jarvis-cae-prd/providers/Microsoft.App/managedEnvironments/cae-jarvis-cac-prd
+  configuration:
+    ingress:
+      external: true          # set false if private-only
+      targetPort: 8000
+      transport: auto
+    secrets:
+      # Reference a Key Vault secret containing your DATABASE_URL
+      - name: pg-url
+        keyVaultUrl: https://kv-jarvis-cac-prd.vault.azure.net/secrets/pg-url/6c4ebfb48065441690e360c93a8b7c38
+  template:
+    revisionSuffix: v1
+    containers:
+      - name: mcp
+        image: acrjarviscacprd.azurecr.io/mcppostgres:latest
+        env:
+          - name: DATABASE_URL
+            secretRef: pg-url
+          - name: PORT
+            value: "8000"
+          # optional pool tuning
+          - name: PG_POOL_MIN
+            value: "1"
+          - name: PG_POOL_MAX
+            value: "5"
+        probes:
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+    scale:
+      minReplicas: 1
+      maxReplicas: 3
+identity:
+  type: SystemAssigned
