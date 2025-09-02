@@ -151,7 +151,6 @@ app = Starlette(
     on_startup=[startup],
     on_shutdown=[shutdown],
 )
-ypo
 # For local dev: uvicorn server:app --port 8000 --host 0.0.0.0
 if __name__ == "__main__":
     import uvicorn
