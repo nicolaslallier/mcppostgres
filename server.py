@@ -116,7 +116,7 @@ async def healthz(_req):
         return JSONResponse({"status": "error", "reason": "no DATABASE_URL"}, status_code=500)
     try:
         if _pool is None:
-            raise RuntimeError("pool not ready")
+            return JSONResponse({"status": "starting", "reason": "pool not ready"}, status_code=503)
         async with _pool.connection() as conn:
             async with conn.cursor() as cur:
                 await cur.execute("SELECT 1;")
@@ -125,12 +125,31 @@ async def healthz(_req):
     except Exception as e:
         return JSONResponse({"status": "error", "reason": str(e)}, status_code=500)
 
+# Initialize the pool when the Starlette app starts
+async def startup():
+    global _pool
+    if not DSN:
+        raise RuntimeError("DATABASE_URL is not set. Provide it via env or Key Vault.")
+    if _pool is None:
+        _pool = AsyncConnectionPool(
+            conninfo=DSN, min_size=POOL_MIN, max_size=POOL_MAX, open=False
+        )
+        await _pool.open()
+
+async def shutdown():
+    global _pool
+    if _pool is not None:
+        await _pool.close()
+        _pool = None
+
 app = Starlette(
     routes=[
         Route("/healthz", healthz, methods=["GET"]),
         # MCP will be available under /mcp (e.g. https://your.host/mcp)
         Mount("/mcp", app=mcp.streamable_http_app()),
     ],
+    on_startup=[startup],
+    on_shutdown=[shutdown],
 )
 
 # For local dev: uvicorn server:app --port 8000 --host 0.0.0.0
